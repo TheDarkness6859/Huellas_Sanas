@@ -56,4 +56,63 @@ public class DatabaseConnection {
 
     }
 
+    public static void startTransaction () throws SQLException {
+
+        if (threadLocal.get() == null || threadLocal.get().isClosed()){
+
+            Connection conn = DriverManager.getConnection(config.getDbUrl(), config.getUser(), config.getPass());
+            conn.setAutoCommit(false);
+            threadLocal.set(conn);
+
+        }
+
+    }
+
+    public static void commit () throws SQLException {
+
+        Connection conn = threadLocal.get();
+
+        if (conn != null){
+
+            conn.commit();
+            closeConnection();
+
+        }
+
+    }
+
+    public static void rollback () {
+
+        try {
+
+            Connection conn = threadLocal.get();
+
+            if (conn != null){
+
+                conn.rollback();
+                closeConnection();
+
+            }
+
+        }catch (SQLException err){
+
+            System.err.println("Error in Rollback: " + err.getMessage());
+
+        }
+
+    }
+
+    public static void closeConnection () throws SQLException{
+
+        Connection conn = threadLocal.get();
+
+        if (conn != null){
+
+            conn.close();
+            threadLocal.remove();
+
+        }
+
+    }
+
 }
